@@ -1,53 +1,165 @@
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-<script>
-  var socket = io.connect('http://localhost:8080');
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>zamazingo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
 
-  // on connection to server, ask for user's name with an anonymous callback
-  socket.on('connect', function(){
-    // call the server-side function 'adduser' and send one parameter (value of prompt)
-    socket.emit('adduser', prompt("What's your name?"));
-  });
+        <!-- CSS -->
+        <link href="/css/bootstrap.min.css" rel="stylesheet">
+        <style type="text/css">
 
-  // listener, whenever the server emits 'updatechat', this updates the chat body
-  socket.on('updatechat', function (username, data) {
-    $('#conversation').append('<b>'+username + ':</b> ' + data + '<br>');
-  });
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                display: none;
+            }
+            #wrap {
+                min-height: 100%;
+                height: auto !important;
+                height: 100%;
+                margin: 0 auto -60px;
+            }
+            #push,
+            #footer {
+                height: 70px;
+            }
+            .margin20 {
+                margin-top: 30px;
+                margin-bottom: 30px;
+            }
 
-  // listener, whenever the server emits 'updateusers', this updates the username list
-  socket.on('updateusers', function(data) {
-    $('#users').empty();
-    $.each(data, function(key, value) {
-      $('#users').append('<div>' + key + '</div>');
-    });
-  });
+        </style>
+        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
 
-  // on load of page
-  $(function(){
-    // when the client clicks SEND
-    $('#datasend').click( function() {
-      var message = $('#data').val();
-      $('#data').val('');
-      // tell server to execute 'sendchat' and send along one parameter
-      socket.emit('sendchat', message);
-    });
+        <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+        <!--[if lt IE 9]>
+          <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
 
-    // when the client hits ENTER on their keyboard
-    $('#data').keypress(function(e) {
-      if(e.which == 13) {
-        $(this).blur();
-        $('#datasend').focus().click();
-      }
-    });
-  });
+    </head>
 
-</script>
-<div style="float:left;width:100px;border-right:1px solid black;height:300px;padding:10px;overflow:scroll-y;">
-  <b>USERS</b>
-  <div id="users"></div>
-</div>
-<div style="float:left;width:300px;height:250px;overflow:scroll-y;padding:10px;">
-  <div id="conversation"></div>
-  <input id="data" style="width:200px;" />
-  <input type="button" id="datasend" value="send" />
-</div>
+    <body>
+
+        <div id="wrap">
+            <div class="container">
+                <div class="page-header">
+                    <h3>zamazingo</h3>
+                    <h6>durum: <span id="batuhanishere" class="hide">bir adet batuhan mevcut. </span><span id="yaseminishere" class="hide">bir adet yasemin mevcut. </span></h6>
+                </div>
+                <p class="lead"><div id="conversation"></div></p>
+            </div>
+
+            <div id="push"></div>
+        </div>
+
+        <div id="footer">
+            <div class="container">
+                <div class="row margin20">
+                    <div class="span5">
+                        <input id="data" class="span5" />
+                    </div>
+                    <div class="span3 btn-group">
+                        <a href="#" class="btn btn-inverse" id="datasend">gönder</a>
+                        <a href="#" class="btn btn-warning" id="tophone">telefona gönder</a>
+                    </div>
+                    <div class="span3 offset1 pull-right btn-group">
+                        <a href="#" id="clear" class="btn">yazıları temizle</a>
+                        <a href="#" id="panic" class="btn btn-danger">acil durum</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+        <script src="/js/bootstrap.min.js"></script>
+        <script src="/js/bg.js"></script>
+
+        <script>
+            
+            var socket = io.connect();
+
+            // on connection to server, ask for user's name with an anonymous callback
+            socket.on('connect', function() {
+                // call the server-side function 'adduser' and send one parameter (value of prompt)
+                socket.emit('adduser', prompt('buralar özel biraz'));
+            });
+
+            // listener, whenever the server emits 'updatechat', this updates the chat body
+            socket.on('updatechat', function(username, data) {
+                $('#conversation').append('<b>' + username + ':</b> ' + data + '<br>');
+            });
+            socket.on('wrongpassword', function(message) {
+                $('body').html('');
+                alert(message);
+            });
+
+            socket.on('showstuff', function(dummy) {
+                $('body').fadeIn();
+                focus_and_scroll();
+            });
+
+            socket.on('updateusers', function(data) {
+                $.each(data, function(key, value) {
+                    if(key === 'b'){
+                        $('#batuhanishere').show();
+                    }
+                    if(key === 'y'){
+                        $('#yaseminishere').show();
+                    }
+                });
+            });
+
+
+            function focus_and_scroll() {
+                $('#data').focus();
+                $("html, body").animate({scrollTop: $(document).height()}, "slow");
+                return false;
+            }
+
+            $(function() {
+                $('#datasend').click(function() {
+                    var message = $('#data').val();
+                    $('#data').val('');
+                    focus_and_scroll();
+                    socket.emit('sendchat', message);
+                });
+                $('#panic').click(function() {
+                    $('body').html('');
+                    socket.emit('panic', 'maydaymayday');
+                    //window.location = "http://www.facebook.com/";
+                });
+                $('#clear').click(function() {
+                    $('#conversation').html('');
+                    focus_and_scroll();
+                });
+                $('#tophone').click(function() {
+                    var message = $('#data').val();
+                    socket.emit('sendchat', message, true);
+                    $('#data').val('');
+                    focus_and_scroll();
+                });
+                $('#sendalarm').click(function() {
+                    if (confirm('emin misin ki?')) {
+                        socket.emit('sendalarm', 'alarm');
+                    }
+                });
+                $('#data').keypress(function(e) {
+                    if (e.which == 13) {
+                        $(this).blur();
+                        $('#datasend').focus().click();
+                    }
+                });
+                $.backstretch("/img/bg.jpg");
+
+            });
+
+        </script>
+    </body>
+</html>
