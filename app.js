@@ -9,7 +9,7 @@ var express = require('express')
     token: 'RfJBofJ2Abrt7e2OgOhCmG7M3ci3no',
 });
 
-server.listen(80);
+server.listen(92);
 app.use(express.static(__dirname + '/public'));
 
 app.get('/', function(req, res) {
